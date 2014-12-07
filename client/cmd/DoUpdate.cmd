@@ -296,11 +296,9 @@ goto SP%OS_NAME%
 
 :SPw2k3
 echo %DATE% %TIME% - Info: Installing most recent Service Pack for Windows Server 2003>>%UPDATE_LOGFILE%
-if "%BACKUP_MODE%"=="/nobackup" (
-  call InstallListedUpdates.cmd %VERIFY_MODE% /u /z /n
-) else (
-  call InstallListedUpdates.cmd %VERIFY_MODE% /u /z
-)
+set nbackup=
+if "%BACKUP_MODE%"=="/nobackup" set nbackup=/n
+call InstallListedUpdates.cmd %VERIFY_MODE% /u /z %nbackup%
 if errorlevel 1 goto InstError
 set RECALL_REQUIRED=1
 goto Installed
