@@ -248,12 +248,12 @@ if exist ..\builddate.txt (
     echo %DATE% %TIME% - Info: Medium build date: %%i>>%UPDATE_LOGFILE%
   )
 )
-  if exist %P_OS_NAME_ARCH%\%OS_LANG%\nul (
+  if exist %P_OS_NAME_ARCH%\%OS_LANG%\. (
     echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^).
     echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^)>>%UPDATE_LOGFILE%
     goto CheckOfficeMedium
   )
-  if exist %P_OS_NAME_ARCH%\glb\nul (
+  if exist %P_OS_NAME_ARCH%\glb\. (
     echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^).
     echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^)>>%UPDATE_LOGFILE%
     goto CheckOfficeMedium
@@ -264,12 +264,12 @@ if "%OFC_NAME%"=="" goto InvalidMedium
 
 :CheckOfficeMedium
 if "%OFC_NAME%"=="" goto ProperMedium
-if exist ..\ofc\%OFC_LANG%\nul (
+if exist ..\ofc\%OFC_LANG%\. (
   echo Medium supports Microsoft Office ^(ofc %OFC_LANG%^).
   echo %DATE% %TIME% - Info: Medium supports Microsoft Office ^(ofc %OFC_LANG%^)>>%UPDATE_LOGFILE%
   goto ProperMedium
 )
-if exist ..\ofc\glb\nul (
+if exist ..\ofc\glb\. (
   echo Medium supports Microsoft Office ^(ofc glb^).
   echo %DATE% %TIME% - Info: Medium supports Microsoft Office ^(ofc glb^)>>%UPDATE_LOGFILE%
   goto ProperMedium
