@@ -8,7 +8,9 @@ if errorlevel 1 goto NoExtensions
 if "%DIRCMD%" NEQ "" set DIRCMD=
 if "%UPDATE_LOGFILE%"=="" set UPDATE_LOGFILE=%SystemRoot%\wsusofflineupdate.log
 if "%HASHDEEP_PATH%"=="" (
-  if /i "%OS_ARCH%"=="x64" (set HASHDEEP_PATH=..\bin\hashdeep64.exe) else (set HASHDEEP_PATH=..\bin\hashdeep.exe)
+  set nor64=
+  if /i "%OS_ARCH%"=="x64" set nor64=64
+  set HASHDEEP_PATH=..\bin\hashdeep%nor64%.exe
 )
 
 if '%1'=='' goto NoParam

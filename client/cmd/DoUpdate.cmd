@@ -100,7 +100,13 @@ if "%OS_ARCH%"=="" (
   )
 )
 if "%OS_LANG%"=="" goto UnsupLang
-if /i "%OS_ARCH%"=="x64" (set HASHDEEP_PATH=..\bin\hashdeep64.exe) else (set HASHDEEP_PATH=..\bin\hashdeep.exe)
+set nor64=
+set X64=
+if /i "%OS_ARCH%"=="x64" (
+  set nor64=64
+  set X64=%OS_ARCH%
+)
+set HASHDEEP_PATH=..\bin\hashdeep%nor64%.exe
 
 rem *** Set target environment variables ***
 call SetTargetEnvVars.cmd
@@ -125,6 +131,8 @@ if "%OS_NAME%"=="wxp" goto UnsupOS
 for %%i in (x86 x64) do (if /i "%OS_ARCH%"=="%%i" goto ValidArch)
 goto UnsupArch
 :ValidArch
+set OS_NAME_ARCH=%OS_NAME%
+if /i "%OS_ARCH%"=="x64" set OS_NAME_ARCH=%OS_NAME%-%OS_ARCH%
 
 rem *** Adjust power management settings ***
 if "%USERNAME%" NEQ "WOUTempAdmin" goto SkipPowerCfg
@@ -240,29 +248,16 @@ if exist ..\builddate.txt (
     echo %DATE% %TIME% - Info: Medium build date: %%i>>%UPDATE_LOGFILE%
   )
 )
-if /i "%OS_ARCH%"=="x64" (
-  if exist ..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\nul (
+  if exist ..\%OS_NAME_ARCH%\%OS_LANG%\nul (
     echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^).
     echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^)>>%UPDATE_LOGFILE%
     goto CheckOfficeMedium
   )
-  if exist ..\%OS_NAME%-%OS_ARCH%\glb\nul (
+  if exist ..\%OS_NAME_ARCH%\glb\nul (
     echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^).
     echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^)>>%UPDATE_LOGFILE%
     goto CheckOfficeMedium
   )
-) else (
-  if exist ..\%OS_NAME%\%OS_LANG%\nul (
-    echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^).
-    echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% %OS_LANG%^)>>%UPDATE_LOGFILE%
-    goto CheckOfficeMedium
-  )
-  if exist ..\%OS_NAME%\glb\nul (
-    echo Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^).
-    echo %DATE% %TIME% - Info: Medium supports Microsoft Windows ^(%OS_NAME% %OS_ARCH% glb^)>>%UPDATE_LOGFILE%
-    goto CheckOfficeMedium
-  )
-)
 echo Medium does not support Microsoft Windows (%OS_NAME% %OS_ARCH% %OS_LANG%).
 echo %DATE% %TIME% - Info: Medium does not support Microsoft Windows (%OS_NAME% %OS_ARCH% %OS_LANG%)>>%UPDATE_LOGFILE%
 if "%OFC_NAME%"=="" goto InvalidMedium
@@ -409,11 +404,7 @@ if %WUA_VER_BUILD% GTR %WUA_VER_TARGET_BUILD% goto SkipWUAInst
 if %WUA_VER_REVIS% GEQ %WUA_VER_TARGET_REVIS% goto SkipWUAInst
 :InstallWUA
 if "%OS_NAME%"=="w61" (
-  if /i "%OS_ARCH%"=="x64" (
-    set WUA_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\WindowsUpdateAgent*-%OS_ARCH%.exe
-  ) else (
-    set WUA_FILENAME=..\%OS_NAME%\glb\WindowsUpdateAgent*-%OS_ARCH%.exe
-  )
+    set WUA_FILENAME=..\%OS_NAME_ARCH%\glb\WindowsUpdateAgent*-%OS_ARCH%.exe
 ) else (
   set WUA_FILENAME=..\wsus\WindowsUpdateAgent*-%OS_ARCH%.exe
 )
@@ -426,11 +417,7 @@ if errorlevel 1 (
 echo Installing most recent Windows Update Agent...
 for /F %%i in ('dir /B %WUA_FILENAME%') do (
   if "%OS_NAME%"=="w61" (
-    if /i "%OS_ARCH%"=="x64" (
-      call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /quiet /norestart /norestartforapi
-    ) else (
-      call InstallOSUpdate.cmd ..\%OS_NAME%\glb\%%i %VERIFY_MODE% /ignoreerrors /quiet /norestart /norestartforapi
-    )
+      call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /quiet /norestart /norestartforapi
   ) else (
     call InstallOSUpdate.cmd ..\wsus\%%i %VERIFY_MODE% /ignoreerrors /wuforce /quiet /norestart
   )
@@ -455,11 +442,7 @@ if "%MSI_TARGET_ID%"=="" (
   echo %DATE% %TIME% - Warning: Environment variable MSI_TARGET_ID not set>>%UPDATE_LOGFILE%
   goto SkipMSIInst
 )
-if /i "%OS_ARCH%"=="x64" (
-  set MSI_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\*%MSI_TARGET_ID%*-%OS_ARCH%.*
-) else (
-  set MSI_FILENAME=..\%OS_NAME%\glb\*%MSI_TARGET_ID%*-%OS_ARCH%.*
-)
+  set MSI_FILENAME=..\%OS_NAME_ARCH%\glb\*%MSI_TARGET_ID%*-%OS_ARCH%.*
 dir /B %MSI_FILENAME% >nul 2>&1
 if errorlevel 1 (
   echo Warning: File %MSI_FILENAME% not found.
@@ -468,11 +451,7 @@ if errorlevel 1 (
 )
 echo Installing most recent Windows Installer...
 for /F %%i in ('dir /B %MSI_FILENAME%') do (
-  if /i "%OS_ARCH%"=="x64" (
-    call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\glb\%%i %VERIFY_MODE% /quiet %BACKUP_MODE% /norestart
-  ) else (
-    call InstallOSUpdate.cmd ..\%OS_NAME%\glb\%%i %VERIFY_MODE% /quiet %BACKUP_MODE% /norestart
-  )
+    call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\glb\%%i %VERIFY_MODE% /quiet %BACKUP_MODE% /norestart
   if not errorlevel 1 set REBOOT_REQUIRED=1
 )
 set MSI_FILENAME=
@@ -516,19 +495,11 @@ if %IE_VER_REVIS% GEQ %IE_VER_TARGET_REVIS% goto SkipIEInst
 goto IE%OS_NAME%
 
 :IEw2k3
-if /i "%OS_ARCH%"=="x64" (
   if "%INSTALL_IE%"=="/instie8" (
-    set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\IE8-WindowsServer2003-%OS_ARCH%-%OS_LANG%*.exe
+    set IE_FILENAME=..\%OS_NAME_ARCH%\%OS_LANG%\IE8-WindowsServer2003-%OS_ARCH%-%OS_LANG%*.exe
   ) else (
-    set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\ie7-windowsserver2003-%OS_ARCH%-%OS_LANG%*.exe
+    set IE_FILENAME=..\%OS_NAME_ARCH%\%OS_LANG%\ie7-windowsserver2003-%OS_ARCH%-%OS_LANG%*.exe
   )
-) else (
-  if "%INSTALL_IE%"=="/instie8" (
-    set IE_FILENAME=..\%OS_NAME%\%OS_LANG%\IE8-WindowsServer2003-%OS_ARCH%-%OS_LANG%*.exe
-  ) else (
-    set IE_FILENAME=..\%OS_NAME%\%OS_LANG%\ie7-windowsserver2003-%OS_ARCH%-%OS_LANG%*.exe
-  )
-)
 dir /B %IE_FILENAME% >nul 2>&1
 if errorlevel 1 (
   echo Warning: File %IE_FILENAME% not found.
@@ -537,38 +508,22 @@ if errorlevel 1 (
 )
 if "%INSTALL_IE%"=="/instie8" (echo Installing Internet Explorer 8...) else (echo Installing Internet Explorer 7...)
 for /F %%i in ('dir /B %IE_FILENAME%') do (
-  if /i "%OS_ARCH%"=="x64" (
     if "%INSTALL_IE%"=="/instie8" (
-      call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
+      call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
     ) else (
-      call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default %BACKUP_MODE% /norestart
+      call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default %BACKUP_MODE% /norestart
     )
-  ) else (
-    if "%INSTALL_IE%"=="/instie8" (
-      call InstallOSUpdate.cmd ..\%OS_NAME%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
-    ) else (
-      call InstallOSUpdate.cmd ..\%OS_NAME%\%OS_LANG%\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default %BACKUP_MODE% /norestart
-    )
-  )
   if not errorlevel 1 set RECALL_REQUIRED=1
 )
 goto IEInstalled
 
 :IEw60
 if exist %SystemRoot%\Temp\wou_ie_tried.txt goto SkipIEInst
-if /i "%OS_ARCH%"=="x64" (
   if "%INSTALL_IE%"=="/instie9" (
-    set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\IE9-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
+    set IE_FILENAME=..\%OS_NAME_ARCH%\glb\IE9-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
   ) else (
-    set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\IE8-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
+    set IE_FILENAME=..\%OS_NAME_ARCH%\glb\IE8-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
   )
-) else (
-  if "%INSTALL_IE%"=="/instie9" (
-    set IE_FILENAME=..\%OS_NAME%\glb\IE9-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
-  ) else (
-    set IE_FILENAME=..\%OS_NAME%\glb\IE8-WindowsVista-%OS_ARCH%-%OS_LANG%*.exe
-  )
-)
 dir /B %IE_FILENAME% >nul 2>&1
 if errorlevel 1 (
   echo Warning: File %IE_FILENAME% not found.
@@ -602,18 +557,10 @@ if "%INSTALL_IE%"=="/instie9" (
 for /F %%i in ('dir /B %IE_FILENAME%') do (
   if "%INSTALL_IE%"=="/instie9" (
     echo Installing Internet Explorer 9...
-    if /i "%OS_ARCH%"=="x64" (
-      call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
-    ) else (
-      call InstallOSUpdate.cmd ..\%OS_NAME%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
-    )
+      call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
   ) else (
     echo Installing Internet Explorer 8...
-    if /i "%OS_ARCH%"=="x64" (
-      call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
-    ) else (
-      call InstallOSUpdate.cmd ..\%OS_NAME%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
-    )
+      call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /no-default /norestart
   )
   if not errorlevel 1 set RECALL_REQUIRED=1
   if not exist %SystemRoot%\Temp\nul md %SystemRoot%\Temp
@@ -623,27 +570,15 @@ goto IEInstalled
 
 :IEw61
 if exist %SystemRoot%\Temp\wou_ie_tried.txt goto SkipIEInst
-if /i "%OS_ARCH%"=="x64" (
   if "%INSTALL_IE%"=="/instie11" (
-    set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\IE11-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
+    set IE_FILENAME=..\%OS_NAME_ARCH%\glb\IE11-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
   ) else (
     if "%INSTALL_IE%"=="/instie10" (
-      set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\IE10-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
+      set IE_FILENAME=..\%OS_NAME_ARCH%\glb\IE10-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
     ) else (
-      set IE_FILENAME=..\%OS_NAME%-%OS_ARCH%\glb\IE9-Windows7-%OS_ARCH%-%OS_LANG%*.exe
+      set IE_FILENAME=..\%OS_NAME_ARCH%\glb\IE9-Windows7-%OS_ARCH%-%OS_LANG%*.exe
     )
   )
-) else (
-  if "%INSTALL_IE%"=="/instie11" (
-    set IE_FILENAME=..\%OS_NAME%\glb\IE11-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
-  ) else (
-    if "%INSTALL_IE%"=="/instie10" (
-      set IE_FILENAME=..\%OS_NAME%\glb\IE10-Windows6.1-%OS_ARCH%-%OS_LANG_EXT%*.exe
-    ) else (
-      set IE_FILENAME=..\%OS_NAME%\glb\IE9-Windows7-%OS_ARCH%-%OS_LANG%*.exe
-    )
-  )
-)
 dir /B %IE_FILENAME% >nul 2>&1
 if errorlevel 1 (
   echo Warning: File %IE_FILENAME% not found.
@@ -677,11 +612,7 @@ if "%INSTALL_IE%"=="/instie11" (echo Installing Internet Explorer 11...) else (
   if "%INSTALL_IE%"=="/instie10" (echo Installing Internet Explorer 10...) else (echo Installing Internet Explorer 9...)
 )
 for /F %%i in ('dir /B %IE_FILENAME%') do (
-  if /i "%OS_ARCH%"=="x64" (
-    call InstallOSUpdate.cmd ..\%OS_NAME%-%OS_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
-  ) else (
-    call InstallOSUpdate.cmd ..\%OS_NAME%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
-  )
+    call InstallOSUpdate.cmd ..\%OS_NAME_ARCH%\glb\%%i %VERIFY_MODE% /ignoreerrors /passive /update-no /closeprograms /no-default /norestart
   if not errorlevel 1 set RECALL_REQUIRED=1
   if not exist %SystemRoot%\Temp\nul md %SystemRoot%\Temp
   echo. >%SystemRoot%\Temp\wou_ie_tried.txt
@@ -928,11 +859,7 @@ if %DOTNET4_VER_MINOR% GTR %DOTNET4_VER_TARGET_MINOR% goto SkipDotNet4Inst
 if %DOTNET4_VER_BUILD% GEQ %DOTNET4_VER_TARGET_BUILD% goto SkipDotNet4Inst
 :InstallDotNet4
 if "%OS_NAME%" NEQ "w2k3" goto SkipDotNet4Prereq
-if /i "%OS_ARCH%"=="x64" (
-  set DOTNET4_PREREQ=..\%OS_NAME%-%OS_ARCH%\%OS_LANG%\wic_%OS_ARCH%_%OS_LANG%.exe
-) else (
-  set DOTNET4_PREREQ=..\%OS_NAME%\%OS_LANG%\wic_%OS_ARCH%_%OS_LANG%.exe
-)
+  set DOTNET4_PREREQ=..\%OS_NAME_ARCH%\%OS_LANG%\wic_%OS_ARCH%_%OS_LANG%.exe
 if exist %DOTNET4_PREREQ% (
   call InstallOSUpdate.cmd %DOTNET4_PREREQ% %VERIFY_MODE% /errorsaswarnings /quiet /norestart
 ) else (
@@ -1140,18 +1067,10 @@ if "%WD_INSTALLED%" NEQ "1" goto SkipWDInst
 if "%WD_DISABLED%"=="1" goto SkipWDInst
 if "%OS_NAME%"=="w62" goto WDmpam
 if "%OS_NAME%"=="w63" goto WDmpam
-if /i "%OS_ARCH%"=="x64" (
-  set WDDEFS_FILENAME=..\wddefs\%OS_ARCH%-glb\mpas-feX64.exe
-) else (
-  set WDDEFS_FILENAME=..\wddefs\%OS_ARCH%-glb\mpas-fe.exe
-)
+  set WDDEFS_FILENAME=..\wddefs\%OS_ARCH%-glb\mpas-fe%X64%.exe
 goto WDmpas
 :WDmpam
-if /i "%OS_ARCH%"=="x64" (
-  set WDDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fex64.exe
-) else (
-  set WDDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fe.exe
-)
+  set WDDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fe%x64%.exe
 :WDmpas
 if not exist %WDDEFS_FILENAME% (
   echo Warning: Windows Defender definition file ^(%WDDEFS_FILENAME%^) not found.
@@ -1441,11 +1360,7 @@ set MSSE_VER_TARGET_MAJOR=
 set MSSE_VER_TARGET_MINOR=
 set MSSE_VER_TARGET_BUILD=
 set MSSE_VER_TARGET_REVIS=
-if /i "%OS_ARCH%"=="x64" (
-  set MSSEDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fex64.exe
-) else (
-  set MSSEDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fe.exe
-)
+  set MSSEDEFS_FILENAME=..\msse\%OS_ARCH%-glb\mpam-fe%x64%.exe
 if not exist %MSSEDEFS_FILENAME% (
   echo Warning: Microsoft Security Essentials definition file ^(%MSSEDEFS_FILENAME%^) not found.
   echo %DATE% %TIME% - Warning: Microsoft Security Essentials definition file ^(%MSSEDEFS_FILENAME%^) not found>>%UPDATE_LOGFILE%
